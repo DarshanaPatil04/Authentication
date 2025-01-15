@@ -1,5 +1,9 @@
 from pathlib import Path
+import environ
 
+# Initialize the environment variables
+env = environ.Env()
+environ.Env.read_env()  # reads the .env file
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,6 +136,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Google OAuth credentials (Use environment variables in production)
-SOCIAL_AUTH_GOOGLE_CLIENT_ID = '426308882643-68dp5ss46tgnaeilr11ru4ihupru9l81.apps.googleusercontent.com'
-SOCIAL_AUTH_GOOGLE_SECRET = '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'
-google_oauth_url = "http://127.0.0.1:8000/auth/google/login/callback/"
+# SOCIAL_AUTH_GOOGLE_CLIENT_ID = '426308882643-68dp5ss46tgnaeilr11ru4ihupru9l81.apps.googleusercontent.com'
+# SOCIAL_AUTH_GOOGLE_SECRET = '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'
+# google_oauth_url = "http://127.0.0.1:8000/auth/google/login/callback/"
+
+
+GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID')
+GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET')
+GOOGLE_OAUTH_URL = env('GOOGLE_OAUTH_URL')
