@@ -19,6 +19,7 @@ urlpatterns = [
     # Google OAuth
     path('auth/google/', views.google_auth, name='google_auth'),
     path('auth/google/callback/', views.google_callback, name='google_callback'),
-   path('export/excel/', views.export_users_to_excel, name='export_users_to_excel'),
+    path('export/excel/', views.export_users_to_excel, name='export_users_to_excel'),
+    path('export-invoices/', views.export_invoices_to_pdf, name='export_invoices_pdf'),
     
 ]

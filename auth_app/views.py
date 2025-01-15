@@ -6,6 +6,7 @@ from .models import Email
 from .middlewares import auth, guest
 from openpyxl import Workbook  # Correct import
 from django.contrib.auth.models import User  # Use the built-in User model
+from xhtml2pdf import pisa
 import logging
 
 
@@ -71,6 +72,29 @@ def export_users_to_excel(request):
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response['Content-Disposition'] = 'attachment; filename=users_data.xlsx'  # File name for the download
     wb.save(response)
+
+    return response
+
+def export_invoices_to_pdf(request):
+    # Dummy invoice data
+    invoices = [
+        {"invoice_number": "INV1001", "customer_name": "Alice", "issue_date": "2024-01-15", "total_amount": 150.25, "paid_status": True},
+        {"invoice_number": "INV1002", "customer_name": "Bob", "issue_date": "2024-01-16", "total_amount": 200.50, "paid_status": False},
+        {"invoice_number": "INV1003", "customer_name": "Charlie", "issue_date": "2024-01-17", "total_amount": 320.75, "paid_status": True},
+    ]
+
+    # Create context for the template
+    context = {'invoices': invoices}
+
+    # Render HTML from the template
+    html_content = render(request, 'invoice_pdf.html', context).content
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="invoices.pdf"'
+    
+    pisa_status = pisa.CreatePDF(html_content, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse("Error generating PDF", status=500)
 
     return response
 

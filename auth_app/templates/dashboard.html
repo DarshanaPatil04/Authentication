@@ -23,7 +23,10 @@
             <div class="card bg-dark text-white shadow-sm border-0">
                 <div class="card-body p-5 text-center">
                     <h1 class="mb-4">Welcome: {{ request.user.username }}</h1>
-                    <a href="{% url 'export_users_to_excel' %}" class="btn btn-success">Export to Excel</a>
+                    <a href="{% url 'export_users_to_excel' %}" class="btn btn-success mb-4">Export to Excel</a>
+                    <form method="get" action="{% url 'export_invoices_pdf' %}">
+                        <button type="submit" class="btn btn-primary">Export to PDF</button>
+                    </form>
                     <div class="mt-4">
                         <a href="{% url 'logout' %}" class="btn btn-danger btn-block">Logout</a>
                     </div>
