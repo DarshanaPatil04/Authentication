@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.http import HttpResponse
-import openpyxl
 from .models import Email
 from .middlewares import auth, guest
-
+from openpyxl import Workbook  # Correct import
+from django.contrib.auth.models import User  # Use the built-in User model
 import logging
 
 
@@ -35,7 +35,7 @@ def login_view(request):
 @auth
 def dashboard_view(request):
     print("Dashboard view was called!")  # Check your terminal
-    return render(request, 'auth_app/dashboard.html')
+    return render(request, 'dashboard.html')
 
 def logout_view(request):
     logout(request)
@@ -51,4 +51,26 @@ def google_auth(request):
 
 def google_callback(request):
     return redirect('home')
+
+# Export users to Excel
+def export_users_to_excel(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "User Data"
+
+    # Add headers
+    ws.append(['ID', 'Username', 'Email', 'Date Joined'])
+
+    # Fetch user data
+    users = User.objects.all()
+
+    for user in users:
+        date_joined_naive = user.date_joined.replace(tzinfo=None) if user.date_joined else None
+        ws.append([user.id, user.username, user.email, date_joined_naive])
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename=users_data.xlsx'  # File name for the download
+    wb.save(response)
+
+    return response
 

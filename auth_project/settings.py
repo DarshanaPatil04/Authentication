@@ -3,7 +3,9 @@ import environ
 
 # Initialize the environment variables
 env = environ.Env()
-environ.Env.read_env()  # reads the .env file
+
+# Read the .env file into the environment
+environ.Env.read_env() # Make sure this is before reading env variables
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'auth_app',  # Your custom app
+    'auth_app', # Your custom app
     # Allauth apps
     'allauth',
     'allauth.account',
@@ -68,8 +70,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
-    'django.middleware.csrf.CsrfViewMiddleware',  # Make sure this is here
+    'allauth.account.middleware.AccountMiddleware', # Required for allauth
+    'django.middleware.csrf.CsrfViewMiddleware', # Make sure this is here
 
 ]
 
@@ -85,7 +87,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',  # Required by allauth
+                'django.template.context_processors.request', # Required by allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -96,11 +98,14 @@ TEMPLATES = [
 # WSGI application
 WSGI_APPLICATION = 'auth_project.wsgi.application'
 
-# Database configuration
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # This sets MySQL as the database backend
+        'NAME': 'authentication',              # Set your MySQL database name
+        'USER': 'root',                        # Your MySQL username
+        'PASSWORD': 'root',                    # Your MySQL password
+        'HOST': 'localhost',                   # Database host (use the appropriate IP address if needed)
+        'PORT': '3306',                        # Default MySQL port (use the correct one if it's different)
     }
 }
 
@@ -135,12 +140,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email backend (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Google OAuth credentials (Use environment variables in production)
-# SOCIAL_AUTH_GOOGLE_CLIENT_ID = '426308882643-68dp5ss46tgnaeilr11ru4ihupru9l81.apps.googleusercontent.com'
-# SOCIAL_AUTH_GOOGLE_SECRET = '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'
-# google_oauth_url = "http://127.0.0.1:8000/auth/google/login/callback/"
-
-
+# Google OAuth Config from .env
 GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET')
 GOOGLE_OAUTH_URL = env('GOOGLE_OAUTH_URL')
+
