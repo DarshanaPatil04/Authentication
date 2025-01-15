@@ -16,9 +16,12 @@ urlpatterns = [
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
+
     # Google OAuth
     path('auth/google/', views.google_auth, name='google_auth'),
     path('auth/google/callback/', views.google_callback, name='google_callback'),
+
+    # Export Excel and PDF
     path('export/excel/', views.export_users_to_excel, name='export_users_to_excel'),
     path('export-invoices/', views.export_invoices_to_pdf, name='export_invoices_pdf'),
     

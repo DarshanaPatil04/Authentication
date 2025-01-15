@@ -47,10 +47,12 @@ def home(request):
 
 def google_auth(request):
     google_oauth_url = "https://accounts.google.com/o/oauth2/auth"
-    redirect_url = f"{google_oauth_url}?client_id=426308882643-68dp5ss46tgnaeilr11ru4ihupru9l81.apps.googleusercontent.com&redirect_uri=http://127.0.0.1:8000/auth/google/login/callback/&response_type=code&scope=email profile"
+    redirect_url = f"{google_oauth_url}?client_id=426308882643-68dp5ss46tgnaeilr11ru4ihupru9l81.apps.googleusercontent.com&redirect_uri=http://127.0.0.1:8000/auth/google/callback/&response_type=code&scope=email profile"
     return redirect(redirect_url)
 
 def google_callback(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
     return redirect('home')
 
 # Export users to Excel

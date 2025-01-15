@@ -145,3 +145,14 @@ GOOGLE_OAUTH_CLIENT_ID = env('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH_CLIENT_SECRET = env('GOOGLE_OAUTH_CLIENT_SECRET')
 GOOGLE_OAUTH_URL = env('GOOGLE_OAUTH_URL')
 
+LOGIN_REDIRECT_URL = '/dashboard/'  # Ensure redirection after successful login
+LOGOUT_REDIRECT_URL = '/'
+
+# Email backend configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'patildarshana712@gmail.com'
+EMAIL_HOST_PASSWORD = 'divu@031886' 
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
