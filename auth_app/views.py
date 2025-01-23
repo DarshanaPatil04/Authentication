@@ -4,12 +4,17 @@ from django.contrib.auth import login, logout
 from django.http import HttpResponse
 from .models import Email
 from .middlewares import auth, guest
-from openpyxl import Workbook  # Correct import
-from django.contrib.auth.models import User  # Use the built-in User model
+from openpyxl import Workbook 
+from django.contrib.auth.models import User
 from xhtml2pdf import pisa
 import logging
-
-
+from .forms import CustomUserCreationForm
+from twilio.rest import Client
+from django.conf import settings
+from django.http import JsonResponse
+import json
+import random
+import string 
 # Logger configuration
 logger = logging.getLogger('django')
 
@@ -85,10 +90,7 @@ def export_invoices_to_pdf(request):
         {"invoice_number": "INV1003", "customer_name": "Charlie", "issue_date": "2024-01-17", "total_amount": 320.75, "paid_status": True},
     ]
 
-    # Create context for the template
     context = {'invoices': invoices}
-
-    # Render HTML from the template
     html_content = render(request, 'invoice_pdf.html', context).content
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="invoices.pdf"'
@@ -100,3 +102,52 @@ def export_invoices_to_pdf(request):
 
     return response
 
+def generate_otp():
+    return ''.join(random.choices(string.digits, k=6))
+
+def send_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            phone_number = data.get('phone_number')
+            if not phone_number:
+                return JsonResponse({'error': 'Phone number is required.'}, status=400)
+            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+            # verification = client.verify.services(settings.TWILIO_SERVICE_SID).verifications.create(
+            #     to=phone_number, 
+            #     channel="sms"
+            # )
+
+            verification = client.messages.create(
+                to=phone_number,
+                from_=settings.TWILIO_NUMBER,
+                body= f"Your OTP is {generate_otp()}"
+            )
+            
+            if verification.status == "pending":
+                return JsonResponse({'success': 'OTP sent successfully'}, status=200)
+            else:
+                return JsonResponse({'error': 'Failed to send OTP'}, status=500)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+        except Exception as e:
+            print(f"Error in OTP sending: {e}")
+            return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+def verify_otp(phone_number, otp_input):
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+    try:
+        verification_check = client.verify.services(settings.TWILIO_SERVICE_SID).verification_checks.create(
+            to=phone_number, 
+            code=otp_input
+        )
+        if verification_check.status == "approved":
+            return True
+        return False
+    except Exception as e:
+        return False 

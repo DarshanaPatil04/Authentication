@@ -7,6 +7,8 @@ urlpatterns = [
     # Home and Authentication
     path('', views.home, name='home'),
     path('register/', views.register_view, name='register'),
+    path('send-otp/', views.send_otp, name='send_otp'),
+    path('verify-otp/', views.verify_otp, name='verify_otp'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard_view, name='dashboard'),

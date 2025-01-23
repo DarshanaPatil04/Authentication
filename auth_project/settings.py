@@ -102,10 +102,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # This sets MySQL as the database backend
         'NAME': 'authentication',              # Set your MySQL database name
-        'USER': 'root',                        # Your MySQL username
-        'PASSWORD': 'root',                    # Your MySQL password
-        'HOST': 'localhost',                   # Database host (use the appropriate IP address if needed)
-        'PORT': '3306',                        # Default MySQL port (use the correct one if it's different)
+        'USER': env('DB_USER'),                        # Your MySQL username
+        'PASSWORD': env('DB_PASSWORD'),                    # Your MySQL password
+        'HOST': env('DB_HOST'),                   # Database host (use the appropriate IP address if needed)
+        'PORT': env('DB_PORT'),                        # Default MySQL port (use the correct one if it's different)
     }
 }
 
@@ -153,6 +153,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'patildarshana712@gmail.com'
-EMAIL_HOST_PASSWORD = 'divu@031886' 
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD') 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
+TWILIO_SERVICE_SID = env('TWILIO_SERVICE_SID')
+TWILIO_NUMBER   = env('TWILIO_NUMBER')
