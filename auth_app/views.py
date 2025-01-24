@@ -15,6 +15,9 @@ from django.http import JsonResponse
 import json
 import random
 import string 
+import http.client
+import requests
+from urllib.parse import urlencode
 # Logger configuration
 logger = logging.getLogger('django')
 
@@ -102,52 +105,78 @@ def export_invoices_to_pdf(request):
 
     return response
 
+#  mobile number verification
+
 def generate_otp():
-    return ''.join(random.choices(string.digits, k=6))
+    return str(random.randint(100000, 999999))
 
 def send_otp(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8'))
             phone_number = data.get('phone_number')
+
             if not phone_number:
-                return JsonResponse({'error': 'Phone number is required.'}, status=400)
-            client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+                return JsonResponse({'error': 'Phone number is required'}, status=400)
 
-            # verification = client.verify.services(settings.TWILIO_SERVICE_SID).verifications.create(
-            #     to=phone_number, 
-            #     channel="sms"
-            # )
+            otp = generate_otp()
 
-            verification = client.messages.create(
-                to=phone_number,
-                from_=settings.TWILIO_NUMBER,
-                body= f"Your OTP is {generate_otp()}"
-            )
-            
-            if verification.status == "pending":
-                return JsonResponse({'success': 'OTP sent successfully'}, status=200)
+            params = {
+                "otp": otp,
+                "sender": settings.MSG91_SENDER_ID,
+                "mobile": phone_number,
+                "message": f"Your OTP is {otp}",
+                "authkey": settings.MSG91_AUTH_KEY,
+                "country": settings.MSG91_COUNTRY_CODE,
+            }
+            url = f"/api/sendotp.php?{urlencode(params)}"
+
+            # Create HTTPS connection and make the request
+            conn = http.client.HTTPSConnection("api.msg91.com")
+            headers = {"Content-Type": "application/json"}
+            conn.request("GET", url, headers=headers)
+
+            response = conn.getresponse()
+            print("Response status:", response.status, response)
+            response_data = response.read()
+
+            if response.status == 200:
+                request.session[f'otp_{phone_number}'] = otp
+                return JsonResponse({'message': 'OTP sent successfully.'}, status=200)
             else:
-                return JsonResponse({'error': 'Failed to send OTP'}, status=500)
+                return JsonResponse({
+                    'error': f'Failed to send OTP. Status: {response.status}, Data: {response_data.decode("utf-8")}'
+                }, status=500)
 
         except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+            return JsonResponse({'error': 'Invalid JSON data provided'}, status=400)
         except Exception as e:
-            print(f"Error in OTP sending: {e}")
-            return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method. Use POST.'}, status=405)
 
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-def verify_otp(phone_number, otp_input):
-    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+# Function to verify OTP
+def verify_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            phone_number = data.get('phone_number')
+            otp = data.get('otp')
 
-    try:
-        verification_check = client.verify.services(settings.TWILIO_SERVICE_SID).verification_checks.create(
-            to=phone_number, 
-            code=otp_input
-        )
-        if verification_check.status == "approved":
-            return True
-        return False
-    except Exception as e:
-        return False 
+            if not phone_number or not otp:
+                return JsonResponse({'error': 'Phone number and OTP are required'}, status=400)
+            saved_otp = request.session.get(f'otp_{phone_number}')
+            print(f"Saved OTP: {saved_otp}")
+            print(f"OTP to verify: {otp}")
+            print(f"Phone number: {phone_number}")
+            if saved_otp and str(saved_otp) == str(otp):
+                del request.session[f'otp_{phone_number}']
+                return JsonResponse({'success': 'OTP verified successfully.'})
+            else:
+                return JsonResponse({'error': 'Invalid OTP or OTP has expired.'}, status=400)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method. Use POST.'}, status=405)

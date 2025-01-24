@@ -79,7 +79,7 @@
                                 <input type="text" name="otp" id="otp"
                                     class="form-control bg-dark text-white border-secondary" placeholder="Enter OTP" />
                             </div>
-                            <button type="button" class="btn btn-success btn-block" onclick="verifyOTP()">Verify OTP</button>
+                            <button type="button" class="btn btn-success btn-block" id="verify_otp_button" onclick="verifyOTP()">Verify OTP</button>
                         </div>
 
                         <div class="form-group mt-3">
@@ -103,7 +103,7 @@
                             {% endif %}
                         </div>
 
-                        <button type="submit" id="registerSubmitBtn" class="btn btn-primary btn-block mt-4" disabled>Submit</button>
+                        <button type="submit" id="registerSubmitBtn" class="btn btn-primary btn-block mt-4">Submit</button>
 
                         <div class="text-center mt-3">
                             <a href="{% url 'login' %}" class="text-muted">Already have an account? Login</a>
@@ -116,9 +116,9 @@
 </div>
 
 <script>
-    let otpSent = false;
+let otpSent = false;
 
-    function sendOTP() {
+function sendOTP() {
     const phoneNumberInput = document.getElementById("phone_number");
     if (phoneNumberInput) {
         const phoneNumber = phoneNumberInput.value;
@@ -132,27 +132,34 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'OTP sent') {
+            if (data.message === 'OTP sent successfully.') {
                 document.getElementById("otpSection").style.display = "block";
+                document.getElementById('sendOtpBtn').style.display = 'none';
                 otpSent = true;
+                console.log("OTP sent successfully!");
             } else {
                 alert("Error: " + (data.message || "Failed to send OTP"));
             }
         })
-        .catch(error => console.error("Error sending OTP:", error));
+        .catch(error => {
+            console.error("Error sending OTP:", error);
+            alert("An error occurred while sending OTP.");
+        });
     } else {
         alert("Phone number input not found!");
     }
 }
 
 
-
 function verifyOTP() {
-    const otpInput = document.getElementById("otp"); // Ensure the OTP field is present
+    const otpInput = document.getElementById("otp");
+    const phoneNumberInput = document.getElementById("phone_number");
     const otpStatusMessage = document.getElementById("otpStatusMessage");
 
-    if (otpInput && otpInput.value) {
+    // Ensure both phone number and OTP are present
+    if (otpInput && phoneNumberInput && otpInput.value && phoneNumberInput.value) {
         const otp = otpInput.value;
+        const phone_number = phoneNumberInput.value;
 
         fetch("/verify-otp/", {
             method: "POST",
@@ -160,22 +167,31 @@ function verifyOTP() {
                 "Content-Type": "application/json",
                 "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
             },
-            body: JSON.stringify({ otp })
+            body: JSON.stringify({ otp, phone_number }) // Include both OTP and phone_number
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'OTP verified') {
-                otpStatusMessage.textContent = "OTP verified successfully!";
-                otpStatusMessage.style.color = "green";
-                document.getElementById("registerSubmitBtn").disabled = false;
-            } else {
-                otpStatusMessage.textContent = "Invalid OTP. Please try again.";
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.json().then(err => { throw err; });
+                }
+            })
+            .then(data => {
+                if (data.success) { // Adjusted to check for the 'success' key
+                    otpStatusMessage.textContent = data.success;
+                    otpStatusMessage.style.color = "green";
+                    document.getElementById("verify_otp_button").style.display = "none";
+                } else {
+                    throw data; // Handle errors properly
+                }
+            })
+            .catch(error => {
+                otpStatusMessage.textContent = error.error || "An error occurred. Please try again.";
                 otpStatusMessage.style.color = "red";
-            }
-        })
-        .catch(error => console.error("Error verifying OTP:", error));
+                console.error("Error verifying OTP:", error);
+            });
     } else {
-        otpStatusMessage.textContent = "Please enter OTP.";
+        otpStatusMessage.textContent = "Phone number and OTP are required.";
         otpStatusMessage.style.color = "red";
     }
 }
