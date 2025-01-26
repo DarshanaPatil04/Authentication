@@ -118,34 +118,18 @@ def send_otp(request):
 
             if not phone_number:
                 return JsonResponse({'error': 'Phone number is required'}, status=400)
-
             otp = generate_otp()
+            url = f"https://2factor.in/API/V1/{settings.FAC_API_KEY}/SMS/{phone_number}/{otp}/Your OTP is {otp}"
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-            params = {
-                "otp": otp,
-                "sender": settings.MSG91_SENDER_ID,
-                "mobile": phone_number,
-                "message": f"Your OTP is {otp}",
-                "authkey": settings.MSG91_AUTH_KEY,
-                "country": settings.MSG91_COUNTRY_CODE,
-            }
-            url = f"/api/sendotp.php?{urlencode(params)}"
-
-            # Create HTTPS connection and make the request
-            conn = http.client.HTTPSConnection("api.msg91.com")
-            headers = {"Content-Type": "application/json"}
-            conn.request("GET", url, headers=headers)
-
-            response = conn.getresponse()
-            print("Response status:", response.status, response)
-            response_data = response.read()
-
-            if response.status == 200:
+            # Send SMS
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
                 request.session[f'otp_{phone_number}'] = otp
                 return JsonResponse({'message': 'OTP sent successfully.'}, status=200)
             else:
                 return JsonResponse({
-                    'error': f'Failed to send OTP. Status: {response.status}, Data: {response_data.decode("utf-8")}'
+                    'error': f"Failed to send SMS. Status: {response.status_code}, Response: {response.text}"
                 }, status=500)
 
         except json.JSONDecodeError:
